@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  git_server:
+    build:
+      context: ./git_server
+      dockerfile: Dockerfile
+    container_name: git_server
+    ports:
+      - "8080:8080"
+    depends_on:
+      - git_db
+    environment:
+      - ENV=development
+    volumes:
+      - git_server:/app
+    networks:
+      - git_server_network
+
+  git_db:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"  # Expose MongoDB on localhost
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root  # Set the root username
+      MONGO_INITDB_ROOT_PASSWORD: password  # Set the root password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - git_server_network
+
+  git_client:
+    build:
+      context: ./git_client
+      dockerfile: Dockerfile
+    container_name: git_client
+    depends_on:
+      - git_server
+    environment:
+      - ENV=development
+    volumes:
+      - git_client:/app
+    networks:
+      - git_client_network
+
+networks:
+  git_server_network:
+    driver: bridge
+  git_client_network:
+    driver: bridge
+
+volumes:
+  git_server:
+  git_client:
+  mongo_data:
